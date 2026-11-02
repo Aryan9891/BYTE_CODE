@@ -1,7 +1,17 @@
-import { PrismaClient, RiskTier, CaseStatus, Role } from '@prisma/client';
+import {
+  PrismaClient,
+  RiskTier,
+  CaseStatus,
+  FeedbackRating,
+  Role,
+  ConsentToggleName,
+  ConsentAction,
+} from '@prisma/client';
 import { can, SessionActor, AccessPurpose } from '@/lib/auth/policy';
 import { logAuditEvent } from '@/lib/audit';
 import { decryptStoredEmail } from '@/lib/crypto/email';
+
+export { RiskTier, CaseStatus, FeedbackRating, Role, ConsentToggleName, ConsentAction };
 
 let prismaInstance: PrismaClient | null = null;
 
@@ -247,12 +257,94 @@ export class DataAccessLayer {
     return this.prisma.counselorCase.findMany({
       where: status ? { status } : undefined,
       include: {
+        risk_evaluation: true,
         assigned_counselor: {
-          select: { id: true, full_name: true, email_encrypted: true },
+          select: { id: true, full_name: true },
         },
+        feedback: true,
       },
       orderBy: { opened_at: 'desc' },
     });
+  }
+
+  /**
+   * Retrieves a single triage case by ID for counselor review.
+   * Strictly pseudonymous with plain-language signals; zero student PII.
+   */
+  async getTriageCaseById(actor: SessionActor, caseId: string) {
+    const authResult = can(actor, 'READ', 'COUNSELOR_CASE', 'DIRECT_CARE_REVIEW');
+    if (!authResult.granted) {
+      throw new Error(`Unauthorized triage access: ${authResult.reason}`);
+    }
+
+    const triageCase = await this.prisma.counselorCase.findUnique({
+      where: { id: caseId },
+      include: {
+        risk_evaluation: true,
+        assigned_counselor: {
+          select: { id: true, full_name: true },
+        },
+        feedback: true,
+      },
+    });
+
+    if (!triageCase) {
+      throw new Error(`Triage case not found: ${caseId}`);
+    }
+
+    return triageCase;
+  }
+
+  /**
+   * Records counselor feedback on alert quality (e.g. Actionable vs False Alarm).
+   * Fuels false-alarm minimization without compromising student privacy.
+   */
+  async recordCaseFeedback(
+    actor: SessionActor,
+    caseId: string,
+    rating: FeedbackRating,
+    notes?: string
+  ) {
+    const authResult = can(actor, 'WRITE', 'COUNSELOR_CASE', 'DIRECT_CARE_REVIEW');
+    if (!authResult.granted) {
+      throw new Error(`Unauthorized feedback write: ${authResult.reason}`);
+    }
+
+    const existingCase = await this.prisma.counselorCase.findUnique({
+      where: { id: caseId },
+    });
+    if (!existingCase) {
+      throw new Error(`Triage case not found: ${caseId}`);
+    }
+
+    const feedback = await this.prisma.caseFeedback.upsert({
+      where: { counselor_case_id: caseId },
+      create: {
+        counselor_case_id: caseId,
+        feedback_rating: rating,
+        notes: notes ?? null,
+      },
+      update: {
+        feedback_rating: rating,
+        notes: notes ?? null,
+        submitted_at: new Date(),
+      },
+    });
+
+    await logAuditEvent(
+      actor.id,
+      actor.role,
+      'UPDATE_CASE_FEEDBACK',
+      'COUNSELOR_CASE',
+      existingCase.student_pseudo_id,
+      {
+        event_category: 'TRIAGE',
+        reason_code: 'TIER_CHANGE_REVIEW',
+      },
+      this.prisma
+    );
+
+    return feedback;
   }
 
   /**

@@ -1,5 +1,6 @@
 import {
   PrismaClient,
+  Prisma,
   Role,
   RiskTier,
   HelpSeekingSignalType,
@@ -260,18 +261,49 @@ async function main() {
         },
       });
 
+      let studentTier: RiskTier = RiskTier.TIER_0;
+      let studentReasons = ["Steady assignment pace and stable attendance consistent with baseline."];
+      let studentDetails: Prisma.InputJsonValue = { stable: true };
+      let studentConf = 0.94;
+
+      if (i === 1) {
+        studentTier = RiskTier.TIER_3;
+        studentConf = 0.88;
+        studentReasons = [
+          "Survey vector: Self-reported exhaustion score elevated (+3.1sigma vs personal 30-day baseline).",
+          "Academic drift: 3 consecutive assignments submitted past deadline; attendance dropped 22% in last 10 days.",
+          "Help-seeking patterns: 2 abandoned counselor appointment booking attempts and repeated midnight resource views.",
+        ];
+        studentDetails = {
+          survey_z_score: 3.1,
+          academic_drift_pct: -22,
+          abandoned_bookings: 2,
+        };
+      } else if (i === 2) {
+        studentTier = RiskTier.TIER_2;
+        studentConf = 0.76;
+        studentReasons = [
+          "Survey vector: Self-reported fatigue score elevated (+2.2sigma vs personal baseline).",
+          "Help-seeking patterns: Abandoned counselor booking attempts.",
+        ];
+        studentDetails = {
+          survey_z_score: 2.2,
+          abandoned_bookings: 1,
+        };
+      }
+
       const riskEval = await prisma.riskEvaluation.create({
         data: {
           student_pseudo_id: pseudoId,
-          tier: RiskTier.TIER_0,
-          confidence_score: 0.94,
-          corroboration_details: { stable: true },
-          plain_language_reasons: ["Steady assignment pace and stable attendance consistent with baseline."],
+          tier: studentTier,
+          confidence_score: studentConf,
+          corroboration_details: studentDetails,
+          plain_language_reasons: studentReasons,
         },
       });
 
-      if (i === 1) {
-        // Create an open case for student 1 for counselor workflow testing
+      if (i === 1 || i === 2) {
+        // Create an open case for student 1 and 2 for counselor workflow testing
         await prisma.counselorCase.create({
           data: {
             risk_evaluation_id: riskEval.id,
@@ -305,6 +337,30 @@ async function main() {
           locale: "en",
         },
       });
+
+      if (i === 6) {
+        // Seed an unconsented Tier 2 case to verify that unmasking is rejected by ethical policy
+        const unconsentedEval = await prisma.riskEvaluation.create({
+          data: {
+            student_pseudo_id: pseudoId,
+            tier: RiskTier.TIER_2,
+            confidence_score: 0.72,
+            corroboration_details: { survey_z_score: 2.4 },
+            plain_language_reasons: [
+              "Survey vector: Elevated stress scores across consecutive weekly check-ins.",
+            ],
+          },
+        });
+
+        await prisma.counselorCase.create({
+          data: {
+            risk_evaluation_id: unconsentedEval.id,
+            student_pseudo_id: pseudoId,
+            status: CaseStatus.OPEN,
+            assigned_counselor_id: counselor1.id,
+          },
+        });
+      }
     } else if (i <= 15) {
       // 11-15: All Revoked (Recorded GRANTED then REVOKED)
       await prisma.consentState.create({
