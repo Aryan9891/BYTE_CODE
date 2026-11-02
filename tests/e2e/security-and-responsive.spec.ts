@@ -47,6 +47,16 @@ test.describe('Section A3: Network Isolation & Console Cleanliness', () => {
 
       expect(consoleIssues).toEqual([]);
     });
+
+    test(`asserts production CSP header contains no unsafe-eval on route: ${route}`, async ({
+      page,
+    }) => {
+      const response = await page.goto(route);
+      const csp = response?.headers()['content-security-policy'] || '';
+      expect(csp).toBeTruthy();
+      expect(csp).not.toContain('unsafe-eval');
+      expect(csp).toContain("default-src 'self'");
+    });
   }
 });
 
