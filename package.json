@@ -15,11 +15,18 @@
     "test:contrast": "vitest run tests/unit/contrast.test.ts",
     "verify:support-snapshot": "vitest run tests/unit/support-snapshot.test.ts",
     "test:coverage": "vitest run --coverage",
+    "db:up": "docker compose up -d",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "prisma:generate": "prisma generate",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" \"docs/**/*.md\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"docs/**/*.md\"",
     "prepare": "husky"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
+    "@prisma/client": "^6.19.3",
     "@radix-ui/react-checkbox": "^1.1.4",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-progress": "^1.1.2",
@@ -59,7 +66,9 @@
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.0.9",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.2",
     "vitest": "^3.0.7"
   }

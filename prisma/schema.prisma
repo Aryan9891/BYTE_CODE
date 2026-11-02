@@ -1,0 +1,358 @@
+// Prisma schema for Sahayak (S-12: AI-Based Mental Health Support and Crisis Detection)
+// Architecture Reference: docs/DATA_MODEL.md & docs/ARCHITECTURE.md
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum Role {
+  STUDENT
+  COUNSELOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum HelpSeekingSignalType {
+  BOOKING_ABANDONED
+  RESOURCE_VIEW
+  NOCTURNAL_USAGE
+}
+
+enum RiskTier {
+  TIER_0
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum CaseStatus {
+  OPEN
+  REVIEWED
+  OUTREACH_SENT
+  CLOSED
+}
+
+enum FeedbackRating {
+  APPROPRIATE_TIMELY
+  TOO_SENSITIVE
+  FALSE_ALARM_NOISE
+}
+
+enum SupportCategory {
+  CAMPUS_COUNSELING
+  NATIONAL_HELPLINE
+  EMERGENCY_SERVICES
+  PEER_SUPPORT
+  SPECIALIZED
+}
+
+enum VerificationStatus {
+  VERIFIED
+  NEEDS_REVERIFICATION
+  PENDING_INITIAL_CHECK
+}
+
+// -----------------------------------------------------------------------------
+// 1. IDENTITY REALM
+// Holds real-world identities, institutional boundaries, and cryptographic keys.
+// Strictly segregated from behavioral telemetry.
+// -----------------------------------------------------------------------------
+
+model Institution {
+  id                      String   @id @default(uuid())
+  name                    String
+  slug                    String   @unique
+  domain_allowlist        String[]
+  emergency_auto_dispatch Boolean  @default(false)
+  data_retention_days     Int      @default(365)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  users             User[]
+  support_resources VerifiedSupportResource[]
+
+  @@map("institutions")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  institution_id   String
+  email            String   @unique
+  password_hash    String
+  full_name        String
+  role             Role     @default(STUDENT)
+  department       String?
+  cohort_year      String?
+  age_verified_18  Boolean  @default(false)
+  is_synthetic     Boolean  @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  institution      Institution       @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  pseudonym_map    PseudonymMap?
+  student_key      StudentKey?
+  consent_records  ConsentRecord[]
+  consent_state    ConsentState?
+  assigned_cases   CounselorCase[]   @relation("CounselorAssignedCases")
+  audit_logs       AuditLogEntry[]   @relation("UserAuditLogs")
+
+  @@index([institution_id])
+  @@index([role])
+  @@map("users")
+}
+
+model PseudonymMap {
+  id               String   @id @default(uuid())
+  user_id          String   @unique
+  student_pseudo_id String  @unique
+  created_at       DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([student_pseudo_id])
+  @@map("pseudonym_maps")
+}
+
+model StudentKey {
+  id            String   @id @default(uuid())
+  user_id       String   @unique
+  encrypted_dek String
+  dek_iv        String
+  dek_auth_tag  String
+  kek_salt      String
+  key_version   Int      @default(1)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("student_keys")
+}
+
+model ConsentRecord {
+  id                                String   @id @default(uuid())
+  user_id                           String
+  consent_surveys                   Boolean  @default(false)
+  consent_academic                  Boolean  @default(false)
+  consent_help_seeking              Boolean  @default(false)
+  consent_counselor_triage          Boolean  @default(false)
+  consent_journal_signals           Boolean  @default(false)
+  emergency_escalation_acknowledged Boolean  @default(false)
+  change_reason                     String?
+  ip_hashed                         String
+  created_at                        DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("consent_records")
+}
+
+model ConsentState {
+  id                                String   @id @default(uuid())
+  user_id                           String   @unique
+  consent_surveys                   Boolean  @default(false)
+  consent_academic                  Boolean  @default(false)
+  consent_help_seeking              Boolean  @default(false)
+  consent_counselor_triage          Boolean  @default(false)
+  consent_journal_signals           Boolean  @default(false)
+  emergency_escalation_acknowledged Boolean  @default(false)
+  last_updated_at                   DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("consent_states")
+}
+
+// -----------------------------------------------------------------------------
+// 2. TELEMETRY REALM
+// Keyed solely by student_pseudo_id. Zero joins allowed to User in analytics.
+// -----------------------------------------------------------------------------
+
+model StudentProfile {
+  student_pseudo_id String   @id
+  department        String
+  cohort_year       String
+  is_synthetic      Boolean  @default(false)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  survey_responses    SurveyResponse[]
+  academic_signals    AcademicSignal[]
+  help_seeking_signals HelpSeekingSignal[]
+  risk_evaluations    RiskEvaluation[]
+  journal_entries     JournalEntry[]
+  counselor_cases     CounselorCase[]
+
+  @@index([department, cohort_year])
+  @@map("student_profiles")
+}
+
+model SurveyResponse {
+  id                String   @id @default(uuid())
+  student_pseudo_id String
+  instrument_type   String
+  answers           Json
+  normalized_score  Float
+  acute_flag_raised Boolean  @default(false)
+  submitted_at      DateTime @default(now())
+
+  student_profile StudentProfile @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+
+  @@index([student_pseudo_id, submitted_at])
+  @@map("survey_responses")
+}
+
+model AcademicSignal {
+  id                       String   @id @default(uuid())
+  student_pseudo_id        String
+  submission_delay_hours   Float
+  attendance_percentage    Float
+  active_assignments_count Int
+  recorded_at              DateTime @default(now())
+
+  student_profile StudentProfile @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+
+  @@index([student_pseudo_id, recorded_at])
+  @@map("academic_signals")
+}
+
+model HelpSeekingSignal {
+  id                String                @id @default(uuid())
+  student_pseudo_id String
+  signal_type       HelpSeekingSignalType
+  metadata          Json
+  recorded_at       DateTime              @default(now())
+
+  student_profile StudentProfile @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+
+  @@index([student_pseudo_id, recorded_at])
+  @@map("help_seeking_signals")
+}
+
+model RiskEvaluation {
+  id                     String   @id @default(uuid())
+  student_pseudo_id      String
+  tier                   RiskTier
+  confidence_score       Float
+  corroboration_details  Json
+  plain_language_reasons Json
+  evaluated_at           DateTime @default(now())
+
+  student_profile StudentProfile  @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+  counselor_cases CounselorCase[]
+
+  @@index([student_pseudo_id, evaluated_at])
+  @@index([tier])
+  @@map("risk_evaluations")
+}
+
+model JournalEntry {
+  id                String   @id @default(uuid())
+  student_pseudo_id String
+  title_encrypted   String
+  content_encrypted String
+  iv                String
+  auth_tag          String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  student_profile StudentProfile @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+
+  @@index([student_pseudo_id])
+  @@map("journal_entries")
+}
+
+model CounselorCase {
+  id                    String     @id @default(uuid())
+  risk_evaluation_id    String
+  student_pseudo_id     String
+  status                CaseStatus @default(OPEN)
+  assigned_counselor_id String?
+  opened_at             DateTime   @default(now())
+  closed_at             DateTime?
+
+  risk_evaluation    RiskEvaluation  @relation(fields: [risk_evaluation_id], references: [id], onDelete: Cascade)
+  student_profile    StudentProfile  @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+  assigned_counselor User?           @relation("CounselorAssignedCases", fields: [assigned_counselor_id], references: [id], onDelete: SetNull)
+  feedback           CaseFeedback?
+
+  @@index([status])
+  @@index([student_pseudo_id])
+  @@map("counselor_cases")
+}
+
+model CaseFeedback {
+  id                String         @id @default(uuid())
+  counselor_case_id String         @unique
+  feedback_rating   FeedbackRating
+  notes             String?
+  submitted_at      DateTime       @default(now())
+
+  counselor_case CounselorCase @relation(fields: [counselor_case_id], references: [id], onDelete: Cascade)
+
+  @@map("case_feedbacks")
+}
+
+// -----------------------------------------------------------------------------
+// 3. AUDIT & SUPPORT DIRECTORY REALM
+// Cryptographically chained, immutable audit trail & verified resources.
+// -----------------------------------------------------------------------------
+
+model AuditLogEntry {
+  id                  String   @id @default(uuid())
+  timestamp           DateTime @default(now())
+  actor_id            String
+  actor_role          String
+  action_type         String
+  target_pseudo_id    String?
+  metadata            Json?
+  previous_entry_hash String
+  current_entry_hash  String
+
+  actor User @relation("UserAuditLogs", fields: [actor_id], references: [id], onDelete: Restrict)
+
+  @@index([timestamp])
+  @@index([actor_id])
+  @@index([target_pseudo_id])
+  @@map("audit_log_entries")
+}
+
+model VerifiedSupportResource {
+  id                    String             @id @default(uuid())
+  institution_id        String?
+  name                  String
+  category              SupportCategory
+  description           String
+  phone                 String
+  sms_or_whatsapp       String?
+  web_url               String
+  operating_hours       String
+  languages_supported   String[]
+  region_code           String
+  is_free_toll_free     Boolean            @default(true)
+  is_crisis_priority    Boolean            @default(false)
+  verification_status   VerificationStatus @default(VERIFIED)
+  verified_by           String
+  verified_on           DateTime
+  next_verification_due DateTime
+  verification_notes    String?
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+
+  institution Institution? @relation(fields: [institution_id], references: [id], onDelete: SetNull)
+
+  @@index([region_code])
+  @@index([category])
+  @@map("verified_support_resources")
+}
