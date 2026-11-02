@@ -20,6 +20,8 @@ export function generatePseudoId(userId: string, salt: string, version: string =
   return `ps_${hash}`;
 }
 
+export const deriveStudentPseudonym = generatePseudoId;
+
 /**
  * Validates a candidate pseudoId against a known userId and salt in constant time.
  * Prevents timing side-channel attacks on pseudonym verification.
