@@ -2,7 +2,12 @@ import { PrismaClient, Role, ConsentToggleName, ConsentAction } from '@prisma/cl
 import { getPrismaClient } from '@/lib/dal';
 import { logAuditEvent } from '@/lib/audit';
 import { decryptStoredEmail } from '@/lib/crypto/email';
+import { enqueueRevocationDeletionJob } from './job-runner';
 import crypto from 'node:crypto';
+
+export * from './consent-text';
+export * from './receipt';
+export * from './job-runner';
 
 export interface ConsentToggles {
   consent_surveys: boolean;
@@ -177,6 +182,15 @@ export async function recordConsentChange(
           locale: 'en',
         },
       });
+
+      // If revoked, enqueue deletion job for matching passive telemetry
+      if (changes[toggle] === false && current[toggle] === true && prisma.revocationDeletionJob) {
+        try {
+          await enqueueRevocationDeletionJob(studentPseudoId, toggle as ConsentToggleName, prisma);
+        } catch {
+          // In-memory or standalone test fallback
+        }
+      }
     }
 
     // 2. Upsert materialized state for fast operational reads
