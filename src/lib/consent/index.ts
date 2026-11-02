@@ -1,6 +1,7 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role, ConsentToggleName, ConsentAction } from '@prisma/client';
 import { getPrismaClient } from '@/lib/dal';
 import { logAuditEvent } from '@/lib/audit';
+import { decryptStoredEmail } from '@/lib/crypto/email';
 import crypto from 'node:crypto';
 
 export interface ConsentToggles {
@@ -46,9 +47,11 @@ export interface StudentDataExport {
     current_state: ConsentToggles;
     audit_history: Array<{
       id: string;
-      change_reason: string | null;
+      toggle: string;
+      action: string;
+      consent_text_version: string;
+      locale: string;
       created_at: string;
-      toggles: ConsentToggles;
     }>;
   };
   telemetry: {
@@ -73,13 +76,27 @@ export function hashIpSubnet(ip?: string): string {
  * Retrieves the current materialized consent state for a user.
  */
 export async function getConsentState(
-  userId: string,
+  userIdOrPseudoId: string,
   prismaOverride?: PrismaClient
 ): Promise<ConsentToggles> {
   const prisma = prismaOverride || getPrismaClient();
   try {
+    let pseudoId = userIdOrPseudoId;
+    if (
+      userIdOrPseudoId.startsWith('usr_') ||
+      userIdOrPseudoId.includes('-') ||
+      userIdOrPseudoId.startsWith('user_')
+    ) {
+      const profile = await prisma.studentProfile?.findUnique({
+        where: { user_id: userIdOrPseudoId },
+      });
+      if (profile) {
+        pseudoId = profile.student_pseudo_id;
+      }
+    }
+
     const state = await prisma.consentState.findUnique({
-      where: { user_id: userId },
+      where: { student_pseudo_id: pseudoId },
     });
 
     if (!state) {
@@ -136,43 +153,59 @@ export async function recordConsentChange(
         : current.emergency_escalation_acknowledged,
   };
 
-  const hashedIp = hashIpSubnet(ipAddress);
+  const _hashedIp = hashIpSubnet(ipAddress);
 
   try {
-    // 1. Insert immutable record into append-only ledger
-    await prisma.consentRecord.create({
-      data: {
-        user_id: userId,
-        ...updated,
-        change_reason: reason,
-        ip_hashed: hashedIp,
-      },
+    let studentPseudoId = userId;
+    const profile = await prisma.studentProfile?.findUnique({
+      where: { user_id: userId },
     });
+    if (profile) {
+      studentPseudoId = profile.student_pseudo_id;
+    }
+
+    // 1. Insert immutable records for each changed toggle
+    const toggleKeys = Object.keys(changes) as Array<keyof ConsentToggles>;
+    for (const toggle of toggleKeys) {
+      await prisma.consentRecord?.create({
+        data: {
+          student_pseudo_id: studentPseudoId,
+          user_id: userId,
+          toggle: toggle as ConsentToggleName,
+          action: (changes[toggle] ? 'GRANTED' : 'REVOKED') as ConsentAction,
+          consent_text_version: '1.0.0',
+          locale: 'en',
+        },
+      });
+    }
 
     // 2. Upsert materialized state for fast operational reads
-    await prisma.consentState.upsert({
-      where: { user_id: userId },
+    await prisma.consentState?.upsert({
+      where: { student_pseudo_id: studentPseudoId },
       update: {
         ...updated,
         last_updated_at: new Date(),
       },
       create: {
-        user_id: userId,
+        student_pseudo_id: studentPseudoId,
         ...updated,
       },
     });
 
     // 3. Emit tamper-evident audit event
-    const isRevocation = (Object.keys(changes) as Array<keyof ConsentToggles>).some(
-      (k) => changes[k] === false && current[k] === true
-    );
+    const isRevocation = toggleKeys.some((k) => changes[k] === false && current[k] === true);
     const actionType = isRevocation ? 'CONSENT_REVOCATION' : 'CONSENT_UPDATE';
 
     await logAuditEvent(
-      { id: userId, role: Role.STUDENT, email: 'student_consent', institution_id: '' },
+      studentPseudoId,
+      Role.STUDENT,
       actionType,
+      'CONSENT_RECORD',
       null,
-      { reason, updated_toggles: changes, ip_hashed: hashedIp },
+      {
+        event_category: 'CONSENT',
+        reason_code: 'USER_PREFERENCE_UPDATE',
+      },
       prisma
     );
   } catch {
@@ -195,7 +228,7 @@ export async function cryptoShredStudentData(
 
   try {
     // 1. Permanently destroy StudentKey (AES DEK keys destroyed)
-    await prisma.studentKey.deleteMany({
+    await prisma.studentKey?.deleteMany({
       where: { user_id: userId },
     });
 
@@ -215,22 +248,38 @@ export async function cryptoShredStudentData(
     );
 
     // 3. Find and purge active counselor cases
-    const pseudo = await prisma.pseudonymMap.findUnique({
-      where: { user_id: userId },
-    });
+    const profile =
+      (await prisma.studentProfile?.findUnique({
+        where: { user_id: userId },
+      })) ||
+      (await (
+        prisma as unknown as {
+          pseudonymMap?: {
+            findUnique: (args: unknown) => Promise<{ student_pseudo_id: string } | null>;
+          };
+        }
+      ).pseudonymMap?.findUnique({
+        where: { user_id: userId },
+      }));
+    const pseudoId = profile?.student_pseudo_id || null;
 
-    if (pseudo) {
-      await prisma.counselorCase.deleteMany({
-        where: { student_pseudo_id: pseudo.student_pseudo_id },
+    if (pseudoId) {
+      await prisma.counselorCase?.deleteMany({
+        where: { student_pseudo_id: pseudoId },
       });
     }
 
     // 4. Record permanent audit event
     await logAuditEvent(
-      { id: userId, role: Role.STUDENT, email: 'student_shred', institution_id: '' },
+      userId,
+      Role.STUDENT,
       'DATA_ERASURE_CRYPTO_SHRED',
-      pseudo?.student_pseudo_id || null,
-      { reason, shredded_at: new Date().toISOString() },
+      'STUDENT_KEY',
+      pseudoId,
+      {
+        event_category: 'ERASURE',
+        reason_code: 'RIGHT_TO_ERASURE',
+      },
       prisma
     );
   } catch {
@@ -263,29 +312,68 @@ export async function exportStudentData(
     department: string | null;
     cohort_year: string | null;
     created_at: Date;
-    pseudonym_map: { student_pseudo_id: string } | null;
+    student_pseudo_id: string | null;
     consent_records: Array<{
       id: string;
-      change_reason: string | null;
+      toggle: string;
+      action: string;
+      consent_text_version: string;
+      locale: string;
       created_at: Date;
-      consent_surveys: boolean;
-      consent_academic: boolean;
-      consent_help_seeking: boolean;
-      consent_counselor_triage: boolean;
-      consent_journal_signals: boolean;
-      emergency_escalation_acknowledged: boolean;
     }>;
     consent_state: ConsentToggles | null;
   } | null = null;
+
   try {
-    user = await prisma.user.findUnique({
+    const userRecord = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        pseudonym_map: true,
+        student_profile: true,
         consent_records: { orderBy: { created_at: 'asc' } },
-        consent_state: true,
       },
     });
+
+    if (userRecord) {
+      const userRecordUnknown = userRecord as unknown as {
+        consent_state?: ConsentToggles;
+        email?: string;
+        pseudonym_map?: { student_pseudo_id: string };
+      };
+      const currentState =
+        userRecordUnknown.consent_state || (await getConsentState(userId, prisma));
+      user = {
+        id: userRecord.id,
+        email: userRecord.email_encrypted
+          ? decryptStoredEmail(userRecord.email_encrypted)
+          : userRecordUnknown.email || '',
+        full_name: userRecord.full_name,
+        department: userRecord.department,
+        cohort_year: userRecord.cohort_year,
+        created_at: userRecord.created_at,
+        student_pseudo_id:
+          userRecord.student_profile?.student_pseudo_id ||
+          userRecordUnknown.pseudonym_map?.student_pseudo_id ||
+          null,
+        consent_records: (userRecord.consent_records || []).map(
+          (r: {
+            id: string;
+            toggle: ConsentToggleName;
+            action: ConsentAction;
+            consent_text_version: string;
+            locale: string;
+            created_at: Date;
+          }) => ({
+            id: r.id,
+            toggle: r.toggle,
+            action: r.action,
+            consent_text_version: r.consent_text_version,
+            locale: r.locale,
+            created_at: r.created_at,
+          })
+        ),
+        consent_state: currentState,
+      };
+    }
   } catch {
     // Offline preview mode
   }
@@ -298,7 +386,7 @@ export async function exportStudentData(
       department: 'Computer Science & Engineering',
       cohort_year: '2026',
       created_at: new Date('2026-09-01T00:00:00Z'),
-      pseudonym_map: { student_pseudo_id: 'ps_demo_student_aarav' },
+      student_pseudo_id: 'ps_demo_student_aarav',
       consent_records: [],
       consent_state: {
         ...DEFAULT_CONSENT_STATE,
@@ -308,7 +396,7 @@ export async function exportStudentData(
     };
   }
 
-  const pseudoId = user.pseudonym_map?.student_pseudo_id || null;
+  const pseudoId = user.student_pseudo_id;
 
   let surveyResponses: unknown[] = [];
   let academicSignals: unknown[] = [];
@@ -366,16 +454,11 @@ export async function exportStudentData(
       },
       audit_history: user.consent_records.map((r) => ({
         id: r.id,
-        change_reason: r.change_reason,
+        toggle: r.toggle,
+        action: r.action,
+        consent_text_version: r.consent_text_version,
+        locale: r.locale,
         created_at: r.created_at.toISOString(),
-        toggles: {
-          consent_surveys: r.consent_surveys,
-          consent_academic: r.consent_academic,
-          consent_help_seeking: r.consent_help_seeking,
-          consent_counselor_triage: r.consent_counselor_triage,
-          consent_journal_signals: r.consent_journal_signals,
-          emergency_escalation_acknowledged: r.emergency_escalation_acknowledged,
-        },
       })),
     },
     telemetry: {

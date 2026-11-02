@@ -1,10 +1,11 @@
 // Prisma schema for Sahayak (S-12: AI-Based Mental Health Support and Crisis Detection)
 // Architecture Reference: docs/DATA_MODEL.md & docs/ARCHITECTURE.md
+// Multi-Schema Partitioning: identity, telemetry, audit
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["identity", "telemetry", "audit"]
 }
 
 generator client {
@@ -20,12 +21,51 @@ enum Role {
   COUNSELOR
   ADMIN
   SUPER_ADMIN
+
+  @@schema("identity")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+
+  @@schema("identity")
+}
+
+enum ConsentToggleName {
+  consent_surveys
+  consent_academic
+  consent_help_seeking
+  consent_counselor_triage
+  consent_journal_signals
+  emergency_escalation_acknowledged
+
+  @@schema("identity")
+}
+
+enum ConsentAction {
+  GRANTED
+  REVOKED
+
+  @@schema("identity")
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@schema("telemetry")
 }
 
 enum HelpSeekingSignalType {
   BOOKING_ABANDONED
   RESOURCE_VIEW
   NOCTURNAL_USAGE
+
+  @@schema("telemetry")
 }
 
 enum RiskTier {
@@ -33,6 +73,8 @@ enum RiskTier {
   TIER_1
   TIER_2
   TIER_3
+
+  @@schema("telemetry")
 }
 
 enum CaseStatus {
@@ -40,12 +82,16 @@ enum CaseStatus {
   REVIEWED
   OUTREACH_SENT
   CLOSED
+
+  @@schema("telemetry")
 }
 
 enum FeedbackRating {
   APPROPRIATE_TIMELY
   TOO_SENSITIVE
   FALSE_ALARM_NOISE
+
+  @@schema("telemetry")
 }
 
 enum SupportCategory {
@@ -54,18 +100,21 @@ enum SupportCategory {
   EMERGENCY_SERVICES
   PEER_SUPPORT
   SPECIALIZED
+
+  @@schema("audit")
 }
 
 enum VerificationStatus {
   VERIFIED
   NEEDS_REVERIFICATION
   PENDING_INITIAL_CHECK
+
+  @@schema("audit")
 }
 
 // -----------------------------------------------------------------------------
-// 1. IDENTITY REALM
-// Holds real-world identities, institutional boundaries, and cryptographic keys.
-// Strictly segregated from behavioral telemetry.
+// 1. IDENTITY REALM (schema: "identity")
+// Holds real-world identities, credentials, envelope encryption keys, and consent.
 // -----------------------------------------------------------------------------
 
 model Institution {
@@ -78,49 +127,38 @@ model Institution {
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
 
-  users             User[]
-  support_resources VerifiedSupportResource[]
+  users User[]
 
   @@map("institutions")
+  @@schema("identity")
 }
 
 model User {
-  id               String   @id @default(uuid())
-  institution_id   String
-  email            String   @unique
-  password_hash    String
-  full_name        String
-  role             Role     @default(STUDENT)
-  department       String?
-  cohort_year      String?
-  age_verified_18  Boolean  @default(false)
-  is_synthetic     Boolean  @default(false)
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  id                 String     @id @default(uuid())
+  institution_id     String
+  email_encrypted    String
+  email_lookup_hash  String     @unique // Keyed HMAC lookup hash (NO plain email column)
+  password_hash      String
+  full_name          String
+  role               Role       @default(STUDENT)
+  status             UserStatus @default(ACTIVE)
+  adult_confirmed    Boolean    @default(false) // 18+ adult self-declaration
+  department         String?
+  cohort_year        String? // Coarse cohort identifier (e.g. "2026")
+  is_synthetic       Boolean    @default(false)
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
 
-  institution      Institution       @relation(fields: [institution_id], references: [id], onDelete: Cascade)
-  pseudonym_map    PseudonymMap?
-  student_key      StudentKey?
-  consent_records  ConsentRecord[]
-  consent_state    ConsentState?
-  assigned_cases   CounselorCase[]   @relation("CounselorAssignedCases")
-  audit_logs       AuditLogEntry[]   @relation("UserAuditLogs")
+  institution     Institution      @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  student_profile StudentProfile?
+  student_key     StudentKey?
+  consent_records ConsentRecord[]
+  assigned_cases  CounselorCase[]  @relation("CounselorAssignedCases")
 
   @@index([institution_id])
   @@index([role])
   @@map("users")
-}
-
-model PseudonymMap {
-  id               String   @id @default(uuid())
-  user_id          String   @unique
-  student_pseudo_id String  @unique
-  created_at       DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([student_pseudo_id])
-  @@map("pseudonym_maps")
+  @@schema("identity")
 }
 
 model StudentKey {
@@ -137,30 +175,30 @@ model StudentKey {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("student_keys")
+  @@schema("identity")
 }
 
 model ConsentRecord {
-  id                                String   @id @default(uuid())
-  user_id                           String
-  consent_surveys                   Boolean  @default(false)
-  consent_academic                  Boolean  @default(false)
-  consent_help_seeking              Boolean  @default(false)
-  consent_counselor_triage          Boolean  @default(false)
-  consent_journal_signals           Boolean  @default(false)
-  emergency_escalation_acknowledged Boolean  @default(false)
-  change_reason                     String?
-  ip_hashed                         String
-  created_at                        DateTime @default(now())
+  id                   String            @id @default(uuid())
+  student_pseudo_id    String
+  user_id              String
+  toggle               ConsentToggleName
+  action               ConsentAction
+  consent_text_version String            @default("1.0.0")
+  locale               String            @default("en")
+  created_at           DateTime          @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([student_pseudo_id])
   @@index([user_id])
   @@map("consent_records")
+  @@schema("identity")
 }
 
 model ConsentState {
   id                                String   @id @default(uuid())
-  user_id                           String   @unique
+  student_pseudo_id                 String   @unique
   consent_surveys                   Boolean  @default(false)
   consent_academic                  Boolean  @default(false)
   consent_help_seeking              Boolean  @default(false)
@@ -169,33 +207,56 @@ model ConsentState {
   emergency_escalation_acknowledged Boolean  @default(false)
   last_updated_at                   DateTime @default(now())
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
+  @@index([student_pseudo_id])
   @@map("consent_states")
+  @@schema("identity")
 }
 
 // -----------------------------------------------------------------------------
-// 2. TELEMETRY REALM
-// Keyed solely by student_pseudo_id. Zero joins allowed to User in analytics.
+// 2. TELEMETRY REALM (schema: "telemetry")
+// Keyed solely by student_pseudo_id. Zero foreign keys or joins to plain identities.
 // -----------------------------------------------------------------------------
 
 model StudentProfile {
   student_pseudo_id String   @id
+  user_id           String   @unique
   department        String
   cohort_year       String
+  locale            String   @default("en")
+  key_version       Int      @default(1)
   is_synthetic      Boolean  @default(false)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
-  survey_responses    SurveyResponse[]
-  academic_signals    AcademicSignal[]
+  user                 User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  survey_responses     SurveyResponse[]
+  academic_signals     AcademicSignal[]
   help_seeking_signals HelpSeekingSignal[]
-  risk_evaluations    RiskEvaluation[]
-  journal_entries     JournalEntry[]
-  counselor_cases     CounselorCase[]
+  risk_evaluations     RiskEvaluation[]
+  journal_entries      JournalEntry[]
+  counselor_cases      CounselorCase[]
+  deletion_jobs        RevocationDeletionJob[]
 
   @@index([department, cohort_year])
   @@map("student_profiles")
+  @@schema("telemetry")
+}
+
+model RevocationDeletionJob {
+  id                   String            @id @default(uuid())
+  student_pseudo_id    String
+  toggle               ConsentToggleName
+  status               JobStatus         @default(PENDING)
+  scheduled_at         DateTime          @default(now())
+  completed_at         DateTime?
+  records_purged_count Int               @default(0)
+  details              Json?
+
+  student_profile StudentProfile @relation(fields: [student_pseudo_id], references: [student_pseudo_id], onDelete: Cascade)
+
+  @@index([student_pseudo_id, status])
+  @@map("revocation_deletion_jobs")
+  @@schema("telemetry")
 }
 
 model SurveyResponse {
@@ -211,6 +272,7 @@ model SurveyResponse {
 
   @@index([student_pseudo_id, submitted_at])
   @@map("survey_responses")
+  @@schema("telemetry")
 }
 
 model AcademicSignal {
@@ -225,6 +287,7 @@ model AcademicSignal {
 
   @@index([student_pseudo_id, recorded_at])
   @@map("academic_signals")
+  @@schema("telemetry")
 }
 
 model HelpSeekingSignal {
@@ -238,6 +301,7 @@ model HelpSeekingSignal {
 
   @@index([student_pseudo_id, recorded_at])
   @@map("help_seeking_signals")
+  @@schema("telemetry")
 }
 
 model RiskEvaluation {
@@ -255,6 +319,7 @@ model RiskEvaluation {
   @@index([student_pseudo_id, evaluated_at])
   @@index([tier])
   @@map("risk_evaluations")
+  @@schema("telemetry")
 }
 
 model JournalEntry {
@@ -271,6 +336,7 @@ model JournalEntry {
 
   @@index([student_pseudo_id])
   @@map("journal_entries")
+  @@schema("telemetry")
 }
 
 model CounselorCase {
@@ -290,6 +356,7 @@ model CounselorCase {
   @@index([status])
   @@index([student_pseudo_id])
   @@map("counselor_cases")
+  @@schema("telemetry")
 }
 
 model CaseFeedback {
@@ -302,30 +369,33 @@ model CaseFeedback {
   counselor_case CounselorCase @relation(fields: [counselor_case_id], references: [id], onDelete: Cascade)
 
   @@map("case_feedbacks")
+  @@schema("telemetry")
 }
 
 // -----------------------------------------------------------------------------
-// 3. AUDIT & SUPPORT DIRECTORY REALM
-// Cryptographically chained, immutable audit trail & verified resources.
+// 3. AUDIT REALM (schema: "audit")
+// Cryptographically chained, immutable audit ledger & verified directory.
 // -----------------------------------------------------------------------------
 
 model AuditLogEntry {
   id                  String   @id @default(uuid())
+  sequence_number     BigInt   @default(autoincrement())
   timestamp           DateTime @default(now())
-  actor_id            String
-  actor_role          String
+  actor_pseudo_id     String   // Audit pseudonym (HMAC), NOT user ID or email!
+  actor_role          Role
   action_type         String
+  resource_type       String
   target_pseudo_id    String?
-  metadata            Json?
+  details             Json     // Allowlisted enums, counters, metadata (NO PII, NO content)
   previous_entry_hash String
-  current_entry_hash  String
-
-  actor User @relation("UserAuditLogs", fields: [actor_id], references: [id], onDelete: Restrict)
+  current_hash        String
 
   @@index([timestamp])
-  @@index([actor_id])
+  @@index([actor_pseudo_id])
   @@index([target_pseudo_id])
+  @@index([sequence_number])
   @@map("audit_log_entries")
+  @@schema("audit")
 }
 
 model VerifiedSupportResource {
@@ -337,6 +407,7 @@ model VerifiedSupportResource {
   phone                 String
   sms_or_whatsapp       String?
   web_url               String
+  source_url            String
   operating_hours       String
   languages_supported   String[]
   region_code           String
@@ -350,9 +421,8 @@ model VerifiedSupportResource {
   created_at            DateTime           @default(now())
   updated_at            DateTime           @updatedAt
 
-  institution Institution? @relation(fields: [institution_id], references: [id], onDelete: SetNull)
-
   @@index([region_code])
   @@index([category])
   @@map("verified_support_resources")
+  @@schema("audit")
 }

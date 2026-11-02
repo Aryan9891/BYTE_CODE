@@ -27,3 +27,4 @@ Key non-negotiable invariants:
 - Small cohort re-identification is prevented by construction.
 - Clinical unmasking is fully audited and legally defensible.
 - Unmasking attempts on Tier 0 or Tier 1 students fail deterministically.
+

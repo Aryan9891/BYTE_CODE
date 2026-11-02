@@ -24,14 +24,16 @@ export async function GET(req: NextRequest) {
       total: entries.length,
       entries: entries.map((e) => ({
         id: e.id,
+        sequence_number: e.sequence_number.toString(),
         timestamp: e.timestamp.toISOString(),
-        actor_id: e.actor_id,
+        actor_pseudo_id: e.actor_pseudo_id,
         actor_role: e.actor_role,
         action_type: e.action_type,
+        resource_type: e.resource_type,
         target_pseudo_id: e.target_pseudo_id,
-        metadata: e.metadata,
+        details: e.details,
         previous_entry_hash: e.previous_entry_hash,
-        current_entry_hash: e.current_entry_hash,
+        current_hash: e.current_hash,
       })),
     });
   } catch (error: unknown) {

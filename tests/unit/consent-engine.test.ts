@@ -69,10 +69,9 @@ describe("Granular Consent Engine & Crypto-Shredding (src/lib/consent/index.ts)"
     expect(updated.consent_help_seeking).toBe(false);
     expect(updated.consent_journal_signals).toBe(false);
 
-    expect(createdRecords).toHaveLength(1);
+    expect(createdRecords).toHaveLength(2);
     expect(createdRecords[0].user_id).toBe("user_123");
-    expect(createdRecords[0].change_reason).toBe("ONBOARDING_CHOICE");
-    expect(createdRecords[0].ip_hashed).toHaveLength(16);
+    expect(createdRecords[0].action).toBe("GRANTED");
 
     expect(auditEvents).toHaveLength(1);
     expect(auditEvents[0].action_type).toBe("CONSENT_UPDATE");

@@ -23,3 +23,4 @@ Key architectural requirements:
 - Non-institutional emails are rejected at registration.
 - Legal exposure under DPDP Act 2023 is mitigated.
 - Developers can test multi-role workflows rapidly in development.
+

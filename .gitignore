@@ -15,6 +15,7 @@ out
 test-results/
 playwright-report/
 coverage/
+.data/
 
 # IDE & OS files
 .DS_Store
