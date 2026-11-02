@@ -14,7 +14,19 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      include: [
+        'src/lib/crypto/**',
+        'src/lib/env.ts',
+        'src/lib/support-snapshot.ts',
+        'src/lib/utils.ts',
+      ],
       exclude: ['node_modules/', '.next/', 'tests/'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 60,
+        statements: 80,
+      },
     },
   },
 });
