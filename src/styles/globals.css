@@ -1,56 +1,65 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @layer base {
   :root {
-    --bg-primary: #FAF9F6;
-    --bg-surface: #FFFFFF;
-    --bg-muted: #F0EFEB;
+    --bg-primary: #faf9f6;
+    --bg-surface: #ffffff;
+    --bg-muted: #f0efeb;
 
-    --text-primary: #1C2421;
-    --text-secondary: #4A5B52;
-    --text-muted: #596B62;
+    --text-primary: #1c2421;
+    --text-secondary: #4a5b52;
+    --text-muted: #596b62;
 
-    --tier-0-thriving: #2D7A58;
-    --tier-1-watch: #9A7B2C;
-    --tier-2-suggested: #B45309;
-    --tier-3-priority: #991B1B;
+    --tier-0-thriving: #2d7a58;
+    --tier-1-watch: #9a7b2c;
+    --tier-2-suggested: #b45309;
+    --tier-3-priority: #991b1b;
 
-    --brand-primary: #1F5F4A;
-    --brand-accent: #388E6D;
-    --brand-focus: #1A56DB;
+    --brand-primary: #1f5f4a;
+    --brand-accent: #388e6d;
+    --brand-focus: #1a56db;
 
-    --crisis-bg: #FEF2F2;
-    --crisis-border: #F87171;
-    --crisis-text: #991B1B;
+    --crisis-bg: #fef2f2;
+    --crisis-border: #f87171;
+    --crisis-text: #991b1b;
   }
 
   .dark {
     --bg-primary: #111614;
-    --bg-surface: #18201D;
-    --bg-muted: #222D28;
+    --bg-surface: #18201d;
+    --bg-muted: #222d28;
 
-    --text-primary: #F3F4F3;
-    --text-secondary: #B4C0B9;
-    --text-muted: #82928A;
+    --text-primary: #f3f4f3;
+    --text-secondary: #b4c0b9;
+    --text-muted: #82928a;
 
-    --tier-0-thriving: #4ADE80;
-    --tier-1-watch: #FBBF24;
-    --tier-2-suggested: #FB923C;
-    --tier-3-priority: #F87171;
+    --tier-0-thriving: #4ade80;
+    --tier-1-watch: #fbbf24;
+    --tier-2-suggested: #fb923c;
+    --tier-3-priority: #f87171;
 
-    --brand-primary: #388E6D;
-    --brand-accent: #52B788;
-    --brand-focus: #60A5FA;
+    --brand-primary: #388e6d;
+    --brand-accent: #52b788;
+    --brand-focus: #60a5fa;
 
-    --crisis-bg: #2A1717;
-    --crisis-border: #991B1B;
-    --crisis-text: #FCA5A5;
+    --crisis-bg: #2a1717;
+    --crisis-border: #991b1b;
+    --crisis-text: #fca5a5;
   }
 
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      var(--font-sans),
+      var(--font-devanagari),
+      var(--font-bengali),
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
