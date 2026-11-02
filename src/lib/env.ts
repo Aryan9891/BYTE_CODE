@@ -6,8 +6,12 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(['en', 'hi', 'bn']).default('en'),
   DEFAULT_REGION_CODE: z.string().min(2).default('IN'),
-  NEXT_PUBLIC_NATIONAL_CRISIS_PHONE: z.string().min(3).default('14416'),
-  NEXT_PUBLIC_CAMPUS_EMERGENCY_PHONE: z.string().min(3).default('112'),
+  SUPPORT_MODE: z.enum(['demo', 'launch']).default('demo'),
+  NEXT_PUBLIC_SUPPORT_MODE: z.enum(['demo', 'launch']).default('demo'),
+  ENABLE_DESIGN_SYSTEM_SHOWCASE: z
+    .string()
+    .transform((val) => val === 'true')
+    .default('false'),
   ENABLE_AUTOMATED_EMERGENCY_DISPATCH: z
     .string()
     .transform((val) => val === 'true')

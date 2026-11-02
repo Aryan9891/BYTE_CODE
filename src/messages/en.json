@@ -9,7 +9,7 @@
     "appTagline": "A private, compassionate space for your academic wellbeing.",
     "skipToContent": "Skip to main content",
     "getHelpNow": "Get help now",
-    "emergencyCall": "Call Crisis Helpline (14416)",
+    "emergencyCall": "Call Crisis Helpline",
     "menu": "Menu",
     "close": "Close",
     "theme": {
@@ -32,13 +32,13 @@
     "student": "Student Portal",
     "counselor": "Counselor Workspace",
     "admin": "Institutional Analytics",
-    "support": "Verified Support",
+    "support": "Support Directory",
     "privacy": "Privacy Center"
   },
   "crisis": {
     "title": "Immediate Support & Emergency Resources",
     "subtitle": "Free, confidential help is available 24 hours a day, 7 days a week. You are not alone.",
-    "demoWarning": "Demo Placeholders: The contact details shown below are for evaluation and must be institutionally verified prior to live campus deployment.",
+    "demoWarning": "Demo Placeholders: The contact details shown below are for evaluation and must be institutionally verified prior to live campus deployment. Not verified for live crisis dispatch.",
     "callDirect": "Call Directly",
     "emergencyServices": "National Emergency Dispatch",
     "campusCare": "Campus Emergency Duty Cell",

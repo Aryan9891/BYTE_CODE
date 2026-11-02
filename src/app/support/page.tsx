@@ -80,7 +80,11 @@ export default function SupportDirectoryPage() {
               </div>
 
               <a
-                href={res.phone.startsWith('Text') ? 'sms:741741' : `tel:${res.phone.replace(/[^0-9+]/g, '')}`}
+                href={
+                  res.sms_or_whatsapp
+                    ? `sms:${res.sms_or_whatsapp.replace(/[^0-9+]/g, '')}`
+                    : `tel:${res.phone.replace(/[^0-9+]/g, '')}`
+                }
                 className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-sm font-semibold bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] transition-colors min-h-[44px]"
               >
                 <PhoneCall className="w-4 h-4" />

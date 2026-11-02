@@ -214,7 +214,11 @@ export default function CrisisPage() {
                     <strong>Hours:</strong> {res.operating_hours}
                   </p>
                   <a
-                    href={res.phone.startsWith('Text') ? 'sms:741741' : `tel:${res.phone.replace(/[^0-9+]/g, '')}`}
+                    href={
+                      res.sms_or_whatsapp
+                        ? `sms:${res.sms_or_whatsapp.replace(/[^0-9+]/g, '')}`
+                        : `tel:${res.phone.replace(/[^0-9+]/g, '')}`
+                    }
                     className="w-full flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold border border-neutral-300 dark:border-neutral-700 bg-[var(--bg-muted)] hover:bg-neutral-200 dark:hover:bg-neutral-800 text-[var(--text-primary)] transition-colors min-h-[44px] cursor-pointer"
                   >
                     <PhoneCall className="w-4 h-4 shrink-0" aria-hidden="true" />
