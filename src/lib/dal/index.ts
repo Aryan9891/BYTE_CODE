@@ -1,5 +1,5 @@
-import { PrismaClient, RiskTier, CaseStatus } from '@prisma/client';
-import { can, SessionActor } from '@/lib/auth/policy';
+import { PrismaClient, RiskTier, CaseStatus, Role } from '@prisma/client';
+import { can, SessionActor, AccessPurpose } from '@/lib/auth/policy';
 import { logAuditEvent } from '@/lib/audit';
 import { decryptStoredEmail } from '@/lib/crypto/email';
 
@@ -253,5 +253,72 @@ export class DataAccessLayer {
       },
       orderBy: { opened_at: 'desc' },
     });
+  }
+
+  /**
+   * Staff reads of student telemetry:
+   * Strictly audited with declared purpose (DIRECT_CARE_REVIEW).
+   * Personal journals are NEVER returned to staff under any circumstances.
+   */
+  async getStudentTelemetryForStaff(
+    actor: SessionActor,
+    studentPseudoId: string,
+    purpose: AccessPurpose
+  ) {
+    const authResult = can(actor, 'READ', 'STUDENT_PROFILE', purpose, {
+      targetStudentPseudoId: studentPseudoId,
+    });
+    if (!authResult.granted) {
+      throw new Error(`Unauthorized staff telemetry read: ${authResult.reason}`);
+    }
+
+    // Mandatory audit logging for staff reads
+    await logAuditEvent(
+      actor.id,
+      actor.role,
+      'STAFF_TELEMETRY_READ',
+      'STUDENT_PROFILE',
+      studentPseudoId,
+      {
+        event_category: 'TRIAGE',
+        reason_code: 'CARE_TRIAGE_UNMASK',
+      },
+      this.prisma
+    );
+
+    const profile = await this.prisma.studentProfile.findUnique({
+      where: { student_pseudo_id: studentPseudoId },
+      include: {
+        risk_evaluations: { orderBy: { evaluated_at: 'desc' }, take: 10 },
+        academic_signals: { orderBy: { recorded_at: 'desc' }, take: 10 },
+        help_seeking_signals: { orderBy: { recorded_at: 'desc' }, take: 10 },
+        // journal_entries is strictly omitted to preserve personal journal envelope privacy
+      },
+    });
+
+    return profile;
+  }
+
+  /**
+   * Student's own telemetry read:
+   * Only accessible by the student themselves under SELF_VIEW.
+   * NOT audited individually to preserve student privacy and prevent surveillance chilling effects.
+   */
+  async getStudentOwnTelemetry(actor: SessionActor) {
+    if (actor.role !== Role.STUDENT || !actor.student_pseudo_id) {
+      throw new Error('Only authenticated students can access their personal telemetry.');
+    }
+
+    const profile = await this.prisma.studentProfile.findUnique({
+      where: { student_pseudo_id: actor.student_pseudo_id },
+      include: {
+        risk_evaluations: { orderBy: { evaluated_at: 'desc' }, take: 20 },
+        academic_signals: { orderBy: { recorded_at: 'desc' }, take: 20 },
+        help_seeking_signals: { orderBy: { recorded_at: 'desc' }, take: 20 },
+        survey_responses: { orderBy: { submitted_at: 'desc' }, take: 20 },
+      },
+    });
+
+    return profile;
   }
 }

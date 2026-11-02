@@ -20,6 +20,24 @@ const eslintConfig = [
       ],
     },
   },
+  {
+    files: ['src/app/**/*.{ts,tsx}', 'src/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@prisma/client',
+              importNames: ['PrismaClient'],
+              message:
+                'Architecture Violation: Direct PrismaClient instantiation is forbidden in app/components. All database queries must flow through DataAccessLayer (src/lib/dal/).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default eslintConfig;

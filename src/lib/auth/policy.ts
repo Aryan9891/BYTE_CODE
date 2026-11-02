@@ -177,6 +177,7 @@ export function can(
     if (
       action === 'READ' &&
       [
+        'STUDENT_PROFILE',
         'COUNSELOR_CASE',
         'RISK_EVALUATION',
         'SURVEY_RESPONSE',
