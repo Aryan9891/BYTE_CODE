@@ -7,6 +7,7 @@ import { Heart, Menu, X } from 'lucide-react';
 import { CrisisButton } from '@/components/shared/CrisisButton';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { DemoRoleSwitcher } from '@/components/dev/DemoRoleSwitcher';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -24,21 +25,21 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-primary)]">
+    <header className="sticky top-0 z-40 w-full border-b border-neutral-200/80 bg-[var(--bg-primary)] dark:border-neutral-800">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-bold text-lg text-[var(--text-primary)] hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2.5 text-lg font-bold text-[var(--text-primary)] transition-opacity hover:opacity-90"
         >
-          <div className="w-9 h-9 rounded-xl bg-[var(--brand-primary)] text-white flex items-center justify-center shadow-xs">
-            <Heart className="w-5 h-5 fill-white" aria-hidden="true" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-xs">
+            <Heart className="h-5 w-5 fill-white" aria-hidden="true" />
           </div>
           <div className="flex flex-col">
-            <span className="leading-tight tracking-tight font-bold text-[var(--brand-primary)] dark:text-[var(--brand-accent)] text-lg">
+            <span className="text-lg leading-tight font-bold tracking-tight text-[var(--brand-primary)] dark:text-[var(--brand-accent)]">
               {t('common.appName')}
             </span>
-            <span className="text-[10px] text-[var(--text-muted)] font-normal hidden sm:inline">
+            <span className="hidden text-[10px] font-normal text-[var(--text-muted)] sm:inline">
               Student Wellbeing Platform
             </span>
           </div>
@@ -47,24 +48,25 @@ export function Header() {
         {/* Actions container with Mobile Emergency Dock (Tab 3 in DOM order) */}
         <div className="order-3 flex items-center gap-2">
           <div id="mobile-emergency-dock" className="flex items-center">
-            <CrisisButton className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 min-h-[44px]" />
+            <CrisisButton className="min-h-[44px] px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm" />
           </div>
           <LanguageSwitcher className="hidden sm:block" />
           <ThemeToggle />
+          <DemoRoleSwitcher />
 
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden p-2 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-focus)] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-xl p-2 text-[var(--text-primary)] hover:bg-[var(--bg-muted)] focus:ring-2 focus:ring-[var(--brand-focus)] focus:outline-none lg:hidden"
             aria-label={mobileOpen ? t('common.close') : t('common.menu')}
             aria-expanded={mobileOpen}
           >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {/* Desktop Navigation (Tab 4+) */}
-        <nav className="hidden lg:flex order-2 items-center gap-1" aria-label="Main Navigation">
+        <nav className="order-2 hidden items-center gap-1 lg:flex" aria-label="Main Navigation">
           {navLinks.map((link) => {
             const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -72,9 +74,9 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'px-3.5 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-[var(--bg-muted)]',
+                  'rounded-xl px-3.5 py-2 text-sm font-medium transition-colors hover:bg-[var(--bg-muted)]',
                   isActive
-                    ? 'text-[var(--brand-primary)] dark:text-[var(--brand-accent)] font-semibold bg-[var(--bg-muted)]'
+                    ? 'bg-[var(--bg-muted)] font-semibold text-[var(--brand-primary)] dark:text-[var(--brand-accent)]'
                     : 'text-[var(--text-secondary)]'
                 )}
               >
@@ -87,9 +89,9 @@ export function Header() {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden border-b border-neutral-200 dark:border-neutral-800 bg-[var(--bg-surface)] px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-neutral-800">
-            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+        <div className="space-y-3 border-b border-neutral-200 bg-[var(--bg-surface)] px-4 py-4 lg:hidden dark:border-neutral-800">
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-2 dark:border-neutral-800">
+            <span className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
               {t('common.menu')}
             </span>
           </div>
@@ -99,13 +101,13 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2.5 rounded-xl text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-muted)]"
+                className="rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-muted)]"
               >
                 {link.label}
               </Link>
             ))}
           </nav>
-          <div className="pt-2 flex items-center justify-between sm:hidden border-t border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center justify-between border-t border-neutral-100 pt-2 sm:hidden dark:border-neutral-800">
             <span className="text-xs text-[var(--text-muted)]">Language:</span>
             <LanguageSwitcher />
           </div>
