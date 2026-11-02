@@ -1,0 +1,89 @@
+{
+  "_meta": {
+    "locale": "en",
+    "name": "English",
+    "status": "APPROVED"
+  },
+  "common": {
+    "appName": "Sahayak",
+    "appTagline": "A private, compassionate space for your academic wellbeing.",
+    "skipToContent": "Skip to main content",
+    "getHelpNow": "Get help now",
+    "emergencyCall": "Call Crisis Helpline (14416)",
+    "menu": "Menu",
+    "close": "Close",
+    "theme": {
+      "toggle": "Toggle theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "select": "Select Language",
+      "en": "English",
+      "hi": "हिंदी (Hindi)",
+      "bn": "বাংলা (Bengali)"
+    },
+    "comingSoon": "Coming in Milestone {milestone}",
+    "backToHome": "Return to Home",
+    "privacyGuaranteed": "Zero Diagnosis • 100% Student-Controlled • k-Anonymity Protected"
+  },
+  "nav": {
+    "student": "Student Portal",
+    "counselor": "Counselor Workspace",
+    "admin": "Institutional Analytics",
+    "support": "Verified Support",
+    "privacy": "Privacy Center"
+  },
+  "crisis": {
+    "title": "Immediate Support & Emergency Resources",
+    "subtitle": "Free, confidential help is available 24 hours a day, 7 days a week. You are not alone.",
+    "demoWarning": "Demo Placeholders: The contact details shown below are for evaluation and must be institutionally verified prior to live campus deployment.",
+    "callDirect": "Call Directly",
+    "emergencyServices": "National Emergency Dispatch",
+    "campusCare": "Campus Emergency Duty Cell",
+    "teleManas": "Tele-MANAS (Govt of India)",
+    "kiran": "KIRAN Mental Health Helpline",
+    "vandrevala": "Vandrevala Foundation Helpline",
+    "hours": "Operating Hours",
+    "languages": "Languages",
+    "freeToll": "Toll-Free",
+    "breathingTitle": "Take a Grounding Breath",
+    "breathingInstruction": "Inhale slowly for 4 seconds, hold for 4 seconds, exhale for 6 seconds.",
+    "confidentialityNote": "Privacy Guarantee: Accessing this crisis page is completely private. No activity or IP records are linked to your university account or academic transcript."
+  },
+  "landing": {
+    "heroTitle": "Your Wellbeing, On Your Terms.",
+    "heroSubtitle": "Sahayak helps you track personal stress patterns, reflect safely, and access verified support—without diagnosis, clinical labels, or privacy trade-offs.",
+    "ctaStartCheckin": "Start a Check-in",
+    "ctaExplorePrivacy": "See How Your Data is Protected",
+    "ctaGetHelp": "Access Crisis Support",
+    "promisesTitle": "Our Non-Negotiable Privacy Promises",
+    "promiseNoDiagnosis": "Zero Diagnosis",
+    "promiseNoDiagnosisDesc": "We detect patterns to suggest gentle check-ins, never psychiatric diagnoses or medical labels.",
+    "promiseConsent": "Consent First",
+    "promiseConsentDesc": "You choose what data is used. Revoke anytime with instant data scrubbing and full export.",
+    "promiseHuman": "Human in the Loop",
+    "promiseHumanDesc": "The system suggests, human counselors decide. No automated punitive actions, ever.",
+    "rolesTitle": "Explore the Platform by Role",
+    "roleStudentTitle": "Student Experience",
+    "roleStudentDesc": "Private weekly pulse checks, personal baseline insights, and an encrypted reflection journal.",
+    "roleStudentAction": "Enter Student Portal",
+    "roleCounselorTitle": "Counselor Triage",
+    "roleCounselorDesc": "Prioritized queue of consented check-in suggestions with plain-language context.",
+    "roleCounselorAction": "Open Counselor Queue",
+    "roleAdminTitle": "Institutional Oversight",
+    "roleAdminDesc": "Macro wellness trends protected by k-anonymity (k >= 10). Zero individual tracking.",
+    "roleAdminAction": "View Admin Analytics"
+  },
+  "tiers": {
+    "tier0": "Thriving",
+    "tier0Desc": "Signals are within personal baseline variance.",
+    "tier1": "Watch",
+    "tier1Desc": "Mild single-vector drift observed. Self-care suggested.",
+    "tier2": "Gentle Check-in Suggested",
+    "tier2Desc": "Corroborated multi-vector distress signals detected.",
+    "tier3": "Priority Human Review",
+    "tier3Desc": "Significant sustained elevation or acute self-report requiring review."
+  }
+}

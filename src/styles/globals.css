@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #FAF9F6;
+    --bg-surface: #FFFFFF;
+    --bg-muted: #F0EFEB;
+
+    --text-primary: #1C2421;
+    --text-secondary: #4A5B52;
+    --text-muted: #596B62;
+
+    --tier-0-thriving: #2D7A58;
+    --tier-1-watch: #9A7B2C;
+    --tier-2-suggested: #B45309;
+    --tier-3-priority: #991B1B;
+
+    --brand-primary: #1F5F4A;
+    --brand-accent: #388E6D;
+    --brand-focus: #1A56DB;
+
+    --crisis-bg: #FEF2F2;
+    --crisis-border: #F87171;
+    --crisis-text: #991B1B;
+  }
+
+  .dark {
+    --bg-primary: #111614;
+    --bg-surface: #18201D;
+    --bg-muted: #222D28;
+
+    --text-primary: #F3F4F3;
+    --text-secondary: #B4C0B9;
+    --text-muted: #82928A;
+
+    --tier-0-thriving: #4ADE80;
+    --tier-1-watch: #FBBF24;
+    --tier-2-suggested: #FB923C;
+    --tier-3-priority: #F87171;
+
+    --brand-primary: #388E6D;
+    --brand-accent: #52B788;
+    --brand-focus: #60A5FA;
+
+    --crisis-bg: #2A1717;
+    --crisis-border: #991B1B;
+    --crisis-text: #FCA5A5;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* High contrast focus ring for all interactive elements */
+  :focus-visible {
+    outline: 2px solid var(--brand-focus);
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
