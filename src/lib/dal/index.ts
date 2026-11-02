@@ -17,7 +17,14 @@ let prismaInstance: PrismaClient | null = null;
 
 export function getPrismaClient(): PrismaClient {
   if (!prismaInstance) {
-    prismaInstance = new PrismaClient();
+    const url =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:postgres_password@localhost:5433/sahayak_db?sslmode=disable';
+    prismaInstance = new PrismaClient({
+      datasources: {
+        db: { url },
+      },
+    });
   }
   return prismaInstance;
 }

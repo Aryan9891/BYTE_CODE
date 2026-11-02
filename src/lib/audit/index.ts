@@ -43,6 +43,21 @@ export function deriveActorPseudoId(actorId: string, salt: string): string {
   return 'act_' + crypto.createHmac('sha256', salt).update(actorId).digest('hex').slice(0, 16);
 }
 
+function canonicalizeJson(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(canonicalizeJson);
+  }
+  const sortedKeys = Object.keys(obj as Record<string, unknown>).sort();
+  const result: Record<string, unknown> = {};
+  for (const key of sortedKeys) {
+    result[key] = canonicalizeJson((obj as Record<string, unknown>)[key]);
+  }
+  return result;
+}
+
 /**
  * Computes canonical SHA-256 hash for an audit log entry across ALL fields.
  */
@@ -68,7 +83,7 @@ export function computeCanonicalAuditHash(
     action_type: actionType,
     resource_type: resourceType,
     target_pseudo: targetPseudoId || null,
-    details: details || null,
+    details: details ? canonicalizeJson(details) : null,
   });
 
   return crypto.createHash('sha256').update(canonicalPayload).digest('hex');

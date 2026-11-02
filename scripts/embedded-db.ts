@@ -1,6 +1,7 @@
 import EmbeddedPostgres from "embedded-postgres";
 import path from "node:path";
 import fs from "node:fs";
+import net from "node:net";
 import { Client } from "pg";
 
 const DATA_DIR = path.resolve(process.cwd(), ".data/postgres");
@@ -10,6 +11,25 @@ const USER = "postgres";
 const PASSWORD = "postgres_password";
 
 let pgInstance: EmbeddedPostgres | null = null;
+
+export function isPortListening(port: number, host = "127.0.0.1"): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(400);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once("error", () => {
+      resolve(false);
+    });
+    socket.connect(port, host);
+  });
+}
 
 export async function ensureDatabaseAndSchemas(port = PORT): Promise<void> {
   // Connect to default 'postgres' db first to create target database
@@ -45,6 +65,12 @@ export async function ensureDatabaseAndSchemas(port = PORT): Promise<void> {
 }
 
 export async function startEmbeddedPostgres(dataDir = DATA_DIR, port = PORT): Promise<string> {
+  const databaseUrl = `postgresql://${USER}:${PASSWORD}@localhost:${port}/${DB_NAME}?sslmode=disable`;
+
+  if (await isPortListening(port)) {
+    return databaseUrl;
+  }
+
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -69,8 +95,6 @@ export async function startEmbeddedPostgres(dataDir = DATA_DIR, port = PORT): Pr
   }
 
   await ensureDatabaseAndSchemas(port);
-
-  const databaseUrl = `postgresql://${USER}:${PASSWORD}@localhost:${port}/${DB_NAME}?sslmode=disable`;
   return databaseUrl;
 }
 

@@ -3,11 +3,11 @@
 -- ==============================================================================
 -- Reference: docs/DATA_MODEL.md, docs/PRIVACY_AND_ETHICS.md & Step 3 Specification
 -- Non-negotiable constraints:
--- 1. audit.audit_log_entries: UPDATE, DELETE, TRUNCATE are blocked.
+-- 1. audit.audit_log_entries: UPDATE, DELETE, TRUNCATE are blocked at STATEMENT level.
 -- 2. identity.consent_records: UPDATE blocked; DELETE permitted ONLY during audited erasure.
 -- ==============================================================================
 
--- 1. Audit Log Immutability Trigger
+-- 1. Audit Log Immutability Trigger (Statement Level)
 CREATE OR REPLACE FUNCTION audit.prevent_audit_log_modification()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -17,9 +17,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_audit_log_immutable ON audit.audit_log_entries;
+DROP TRIGGER IF EXISTS trg_audit_log_truncate ON audit.audit_log_entries;
+
 CREATE TRIGGER trg_audit_log_immutable
-BEFORE UPDATE OR DELETE ON audit.audit_log_entries
-FOR EACH ROW
+BEFORE UPDATE OR DELETE OR TRUNCATE ON audit.audit_log_entries
+FOR EACH STATEMENT
 EXECUTE FUNCTION audit.prevent_audit_log_modification();
 
 -- 2. Consent Record Append-Only Trigger
