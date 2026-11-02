@@ -4,13 +4,12 @@ import * as React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, PhoneCall } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
-import { CrisisButton } from '@/components/shared/CrisisButton';
 
 export function Footer() {
   const { t } = useI18n();
 
   return (
-    <footer className="w-full border-t border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-muted)]/50 py-10 mt-auto">
+    <footer className="w-full border-t border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-muted)]/50 py-10 pb-24 sm:pb-10 mt-auto">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Col 1: Mission */}
@@ -95,10 +94,7 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Floating Crisis Button on Mobile (Safe Margin) */}
-      <div className="fixed bottom-4 right-4 z-40 sm:hidden">
-        <CrisisButton className="shadow-2xl" />
-      </div>
+
     </footer>
   );
 }

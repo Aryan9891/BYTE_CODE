@@ -37,7 +37,7 @@ export default function RootLayout({
           <I18nProvider>
             <SkipLink targetId="main-content" label="Skip to main content" />
             <Header />
-            <main id="main-content" className="flex-1 focus:outline-none" tabIndex={-1}>
+            <main id="main-content" className="flex-1 pb-20 sm:pb-0 focus:outline-none" tabIndex={-1}>
               {children}
             </main>
             <Footer />

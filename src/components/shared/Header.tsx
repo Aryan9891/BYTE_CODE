@@ -24,7 +24,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-primary)]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-primary)]">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <Link
@@ -44,9 +44,11 @@ export function Header() {
           </div>
         </Link>
 
-        {/* Priority Crisis Button in DOM order (Tab 3) - rendered visually in right control zone */}
-        <div className="order-3 flex items-center gap-2.5">
-          <CrisisButton className="hidden sm:inline-flex" />
+        {/* Actions container with Mobile Emergency Dock (Tab 3 in DOM order) */}
+        <div className="order-3 flex items-center gap-2">
+          <div id="mobile-emergency-dock" className="flex items-center">
+            <CrisisButton className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 min-h-[44px]" />
+          </div>
           <LanguageSwitcher className="hidden sm:block" />
           <ThemeToggle />
 
@@ -90,7 +92,6 @@ export function Header() {
             <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               {t('common.menu')}
             </span>
-            <CrisisButton className="inline-flex sm:hidden" />
           </div>
           <nav className="flex flex-col space-y-1" aria-label="Mobile Navigation">
             {navLinks.map((link) => (
