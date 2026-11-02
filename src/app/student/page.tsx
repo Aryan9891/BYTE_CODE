@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function StudentHomePage() {
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-12 space-y-6">
+    <div className="container mx-auto max-w-4xl space-y-6 px-4 py-12">
       <EmptyState
         icon={Heart}
         milestoneTag="Milestone 2: Surveys & Self-Help Hub"

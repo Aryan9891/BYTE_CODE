@@ -18,12 +18,7 @@ export interface TierBadgeProps {
  * This component is intended for Counselor / Wellbeing Staff triage views ONLY.
  * It must NEVER be shown to students as a psychological label or score.
  */
-export function TierBadge({
-  tier,
-  showIcon = true,
-  className,
-  size = 'md',
-}: TierBadgeProps) {
+export function TierBadge({ tier, showIcon = true, className, size = 'md' }: TierBadgeProps) {
   const configs = {
     TIER_0: {
       label: 'Tier 0: Thriving',

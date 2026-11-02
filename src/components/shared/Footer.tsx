@@ -9,51 +9,66 @@ export function Footer() {
   const { t } = useI18n();
 
   return (
-    <footer className="w-full border-t border-neutral-200/80 dark:border-neutral-800 bg-[var(--bg-muted)]/50 py-10 pb-24 sm:pb-10 mt-auto">
+    <footer className="mt-auto w-full border-t border-neutral-200/80 bg-[var(--bg-muted)]/50 py-10 pb-24 sm:pb-10 dark:border-neutral-800">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Col 1: Mission */}
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-[var(--brand-primary)] dark:text-[var(--brand-accent)]">
+              <span className="text-lg font-bold text-[var(--brand-primary)] dark:text-[var(--brand-accent)]">
                 {t('common.appName')}
               </span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-medium">
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
                 Ethical Architecture
               </span>
             </div>
-            <p className="text-sm text-[var(--text-secondary)] max-w-md leading-relaxed">
+            <p className="max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
               {t('common.appTagline')}
             </p>
-            <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5 pt-1">
-              <ShieldCheck className="w-4 h-4 text-[var(--brand-primary)] shrink-0" aria-hidden="true" />
+            <p className="flex items-center gap-1.5 pt-1 text-xs text-[var(--text-muted)]">
+              <ShieldCheck
+                className="h-4 w-4 shrink-0 text-[var(--brand-primary)]"
+                aria-hidden="true"
+              />
               <span>{t('common.privacyGuaranteed')}</span>
             </p>
           </div>
 
           {/* Col 2: Stakeholder Views */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <h4 className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
               Stakeholder Portals
             </h4>
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
               <li>
-                <Link href="/student" className="hover:text-[var(--text-primary)] transition-colors">
+                <Link
+                  href="/student"
+                  className="transition-colors hover:text-[var(--text-primary)]"
+                >
                   {t('nav.student')}
                 </Link>
               </li>
               <li>
-                <Link href="/counselor" className="hover:text-[var(--text-primary)] transition-colors">
+                <Link
+                  href="/counselor"
+                  className="transition-colors hover:text-[var(--text-primary)]"
+                >
                   {t('nav.counselor')}
                 </Link>
               </li>
               <li>
-                <Link href="/admin/analytics" className="hover:text-[var(--text-primary)] transition-colors">
+                <Link
+                  href="/admin/analytics"
+                  className="transition-colors hover:text-[var(--text-primary)]"
+                >
                   {t('nav.admin')}
                 </Link>
               </li>
               <li>
-                <Link href="/design-system" className="hover:text-[var(--text-primary)] transition-colors text-xs text-[var(--text-muted)]">
+                <Link
+                  href="/design-system"
+                  className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                >
                   Design System Showcase (Dev)
                 </Link>
               </li>
@@ -62,22 +77,31 @@ export function Footer() {
 
           {/* Col 3: Support & Legal */}
           <div className="space-y-2.5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <h4 className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
               Safety & Governance
             </h4>
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
               <li>
-                <Link href="/crisis" className="hover:text-[var(--crisis-text)] font-semibold transition-colors flex items-center gap-1.5 text-red-700 dark:text-red-400">
-                  <PhoneCall className="w-3.5 h-3.5" /> 24/7 Crisis Safety Page
+                <Link
+                  href="/crisis"
+                  className="flex items-center gap-1.5 font-semibold text-red-700 transition-colors hover:text-[var(--crisis-text)] dark:text-red-400"
+                >
+                  <PhoneCall className="h-3.5 w-3.5" /> 24/7 Crisis Safety Page
                 </Link>
               </li>
               <li>
-                <Link href="/support" className="hover:text-[var(--text-primary)] transition-colors">
+                <Link
+                  href="/support"
+                  className="transition-colors hover:text-[var(--text-primary)]"
+                >
                   {t('nav.support')}
                 </Link>
               </li>
               <li>
-                <Link href="/settings/privacy" className="hover:text-[var(--text-primary)] transition-colors">
+                <Link
+                  href="/settings/privacy"
+                  className="transition-colors hover:text-[var(--text-primary)]"
+                >
                   {t('nav.privacy')}
                 </Link>
               </li>
@@ -86,15 +110,16 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
-          <p>© {new Date().getFullYear()} Sahayak. Dedicated to student health, privacy, and compassion.</p>
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-neutral-200 pt-6 text-xs text-[var(--text-muted)] sm:flex-row dark:border-neutral-800">
+          <p>
+            © {new Date().getFullYear()} Sahayak. Dedicated to student health, privacy, and
+            compassion.
+          </p>
           <p className="text-center sm:text-right">
             S-12: AI-Based Mental Health Support and Crisis Detection • Built with Next.js 15
           </p>
         </div>
       </div>
-
-
     </footer>
   );
 }

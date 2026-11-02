@@ -9,7 +9,7 @@ export function VisuallyHidden({
   return (
     <span
       className={cn(
-        'absolute h-px w-px p-0 -m-px overflow-hidden whitespace-nowrap border-0',
+        'absolute -m-px h-px w-px overflow-hidden border-0 p-0 whitespace-nowrap',
         className
       )}
       style={{ clip: 'rect(0, 0, 0, 0)' }}

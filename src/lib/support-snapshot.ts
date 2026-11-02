@@ -56,7 +56,9 @@ export function validateSupportSnapshot(
 
     if (!parsed.success) {
       const entryId = (raw as Record<string, unknown>)?.id || `index_${i}`;
-      errors.push(`Entry ${entryId} schema validation failed: ${JSON.stringify(parsed.error.flatten().fieldErrors)}`);
+      errors.push(
+        `Entry ${entryId} schema validation failed: ${JSON.stringify(parsed.error.flatten().fieldErrors)}`
+      );
       continue;
     }
 
@@ -70,7 +72,9 @@ export function validateSupportSnapshot(
 
     const dueDate = new Date(item.next_verification_due);
     if (isNaN(dueDate.getTime())) {
-      errors.push(`Entry ${item.id}: invalid next_verification_due date "${item.next_verification_due}"`);
+      errors.push(
+        `Entry ${item.id}: invalid next_verification_due date "${item.next_verification_due}"`
+      );
     }
 
     const hasPlaceholderTag =
@@ -83,7 +87,9 @@ export function validateSupportSnapshot(
 
     if (mode === 'launch') {
       if (item.verification_status !== 'VERIFIED') {
-        errors.push(`Entry ${item.id}: verification_status must be 'VERIFIED' in launch mode (found '${item.verification_status}')`);
+        errors.push(
+          `Entry ${item.id}: verification_status must be 'VERIFIED' in launch mode (found '${item.verification_status}')`
+        );
       }
       if (!item.verified_by || item.verified_by.trim().length === 0) {
         errors.push(`Entry ${item.id}: missing verified_by counselor/official identifier`);
@@ -92,7 +98,9 @@ export function validateSupportSnapshot(
         errors.push(`Entry ${item.id}: missing source_url verification reference`);
       }
       if (item.verification_notes && item.verification_notes.includes('VERIFY BEFORE LAUNCH')) {
-        errors.push(`Entry ${item.id}: contains unresolved 'VERIFY BEFORE LAUNCH' tag in verification_notes`);
+        errors.push(
+          `Entry ${item.id}: contains unresolved 'VERIFY BEFORE LAUNCH' tag in verification_notes`
+        );
       }
       if (dueDate.getTime() < currentDate.getTime()) {
         errors.push(`Entry ${item.id}: review date (${item.next_verification_due}) has expired`);

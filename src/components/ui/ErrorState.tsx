@@ -21,24 +21,26 @@ export function ErrorState({
   className,
 }: ErrorStateProps) {
   return (
-    <Card className={cn('text-center py-12 px-6 border-amber-200 dark:border-amber-900', className)}>
-      <CardContent className="flex flex-col items-center max-w-md mx-auto space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-700 dark:text-amber-400">
-          <AlertCircle className="w-7 h-7" aria-hidden="true" />
+    <Card
+      className={cn('border-amber-200 px-6 py-12 text-center dark:border-amber-900', className)}
+    >
+      <CardContent className="mx-auto flex max-w-md flex-col items-center space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
+          <AlertCircle className="h-7 w-7" aria-hidden="true" />
         </div>
         <div className="space-y-1.5">
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{description}</p>
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="flex flex-wrap gap-3 pt-2 justify-center">
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
           {onRetry && (
             <Button onClick={onRetry} variant="default" className="gap-2">
-              <RefreshCw className="w-4 h-4" /> Try again
+              <RefreshCw className="h-4 w-4" /> Try again
             </Button>
           )}
           <Button asChild variant="outline" className="gap-2">
             <Link href={homeHref}>
-              <Home className="w-4 h-4" /> Return to Home
+              <Home className="h-4 w-4" /> Return to Home
             </Link>
           </Button>
         </div>

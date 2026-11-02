@@ -16,16 +16,13 @@ export function LanguageSwitcher({ className }: { className?: string }) {
 
   return (
     <div className={className}>
-      <Select
-        value={locale}
-        onValueChange={(val: string) => setLocale(val as Locale)}
-      >
+      <Select value={locale} onValueChange={(val: string) => setLocale(val as Locale)}>
         <SelectTrigger
           className="h-10 w-[140px] rounded-xl text-xs font-medium"
           aria-label={t('common.language.select')}
         >
           <div className="flex items-center gap-1.5">
-            <Languages className="w-3.5 h-3.5 opacity-70 shrink-0" aria-hidden="true" />
+            <Languages className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
             <SelectValue />
           </div>
         </SelectTrigger>

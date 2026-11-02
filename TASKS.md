@@ -66,14 +66,18 @@
 ---
 
 ## Milestone 4: Counselor Workspace & Case Management (M4)
-- [ ] **TASK-401: Counselor Triage Dashboard UI**
+- [x] **TASK-401: Counselor Triage Dashboard UI**
   - *Acceptance Criteria:* Build `/counselor` dashboard displaying active suggested check-ins grouped by Tier 3 (Priority Review) and Tier 2 (Gentle Check-in Suggested). Shows pseudonymous tokens, trigger dates, and corroboration summaries.
-- [ ] **TASK-402: Case Detail View & Explainability Breakdown**
+  - *Evidence:* `/counselor` queue connected to `dal.getActiveTriageCases` with zero student PII and verified non-diagnostic clinical rationale.
+- [x] **TASK-402: Case Detail View & Explainability Breakdown**
   - *Acceptance Criteria:* Build `/counselor/case/[id]` displaying plain-language signal summaries, baseline deviation charts, and supportive outreach templates.
-- [ ] **TASK-403: Audited Identity Unmasking Flow**
+  - *Evidence:* `/counselor/cases/[id]` renders multi-vector signal corroboration from personal baseline shifts, omitting clinical diagnoses.
+- [x] **TASK-403: Audited Identity Unmasking Flow**
   - *Acceptance Criteria:* Implement two-step modal requiring counselor to input an outreach reason before revealing student contact info. Immediately triggers an immutable record in `audit_logs`.
-- [ ] **TASK-404: Counselor Feedback Loop Widget**
+  - *Evidence:* Audited modal requires $\ge 10$ character clinical justification, gates strictly on Tier 2/3 and active consent, appends immutable audit entry, and reveals decrypted email and student metadata.
+- [x] **TASK-404: Counselor Feedback Loop Widget**
   - *Acceptance Criteria:* Implement feedback buttons on cases (`APPROPRIATE_TIMELY`, `TOO_SENSITIVE`, `FALSE_ALARM_NOISE`) writing to `telemetry_realm.case_feedback` for continuous calibration.
+  - *Evidence:* Feedback buttons integrated on `/counselor/cases/[id]` writing to `caseFeedback` via `dal.recordCaseFeedback` with audit event.
 
 ---
 
@@ -90,12 +94,14 @@
 ---
 
 ## Milestone 6: Institutional Analytics & Audit Trail (M6)
-- [ ] **TASK-601: k-Anonymity Aggregation Service**
+- [x] **TASK-601: k-Anonymity Aggregation Service**
   - *Acceptance Criteria:* Implement aggregation pipeline in `lib/analytics/k-anonymity.ts`. Any cohort query yielding $<10$ individual students automatically redacts metrics with a privacy suppression payload.
+  - *Evidence:* `dal.getCohortMetrics` strictly validates $k \ge 10$ and suppresses output whenever cohort size is under 10 students (`tests/unit/architecture-dal.test.ts`).
 - [ ] **TASK-602: Institutional Wellbeing Trends Dashboard**
   - *Acceptance Criteria:* Build `/admin/analytics` featuring Recharts visualizations of campus-wide stress trends over academic terms, department comparisons, and resource utilization with clear $k \ge 10$ badges.
-- [ ] **TASK-603: Cryptographically Chained Audit Logger**
+- [x] **TASK-603: Cryptographically Chained Audit Logger**
   - *Acceptance Criteria:* Implement `lib/audit/logger.ts` recording security actions with SHA-256 hash chaining (`current_hash = SHA256(prev_hash + data)`).
+  - *Evidence:* `src/lib/audit/index.ts` enforces canonical SHA-256 hash chaining, advisory locks (`pg_advisory_xact_lock`), and statement-level PostgreSQL immutability triggers (`tests/integration/audit-chain-integrity.test.ts`, `tests/integration/db-immutability-triggers.test.ts`).
 - [ ] **TASK-604: Tamper-Evident Audit Log Viewer UI**
   - *Acceptance Criteria:* Build `/admin/audit-logs` table with hash verification status indicator ("Chain Intact") and filtering by actor or action type.
 

@@ -18,10 +18,10 @@ export function ToastBanner({
   className,
 }: ToastBannerProps) {
   const icons = {
-    info: <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />,
-    success: <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />,
-    warning: <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />,
-    error: <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />,
+    info: <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />,
+    success: <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />,
+    warning: <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />,
+    error: <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />,
   };
 
   const bgStyles = {
@@ -36,20 +36,20 @@ export function ToastBanner({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-start gap-3 rounded-2xl border p-4 shadow-sm text-sm text-[var(--text-primary)]',
+        'flex items-start gap-3 rounded-2xl border p-4 text-sm text-[var(--text-primary)] shadow-sm',
         bgStyles[type],
         className
       )}
     >
       {icons[type]}
       <div className="flex-1">
-        {title && <p className="font-semibold text-sm mb-0.5">{title}</p>}
+        {title && <p className="mb-0.5 text-sm font-semibold">{title}</p>}
         <p className="text-[var(--text-secondary)]">{message}</p>
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded-md cursor-pointer"
+          className="cursor-pointer rounded-md p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           aria-label="Dismiss message"
         >
           <X className="h-4 w-4" />

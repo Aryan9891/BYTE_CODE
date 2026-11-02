@@ -29,21 +29,21 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <Card className={cn('text-center py-12 px-6', className)}>
-      <CardContent className="flex flex-col items-center max-w-md mx-auto space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-[var(--bg-muted)] flex items-center justify-center text-[var(--brand-primary)] dark:text-[var(--brand-accent)]">
-          <Icon className="w-7 h-7" aria-hidden="true" />
+    <Card className={cn('px-6 py-12 text-center', className)}>
+      <CardContent className="mx-auto flex max-w-md flex-col items-center space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--bg-muted)] text-[var(--brand-primary)] dark:text-[var(--brand-accent)]">
+          <Icon className="h-7 w-7" aria-hidden="true" />
         </div>
         {milestoneTag && (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[var(--text-secondary)] border border-neutral-300 dark:border-neutral-700">
+          <span className="rounded-full border border-neutral-300 bg-neutral-100 px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] dark:border-neutral-700 dark:bg-neutral-800">
             {milestoneTag}
           </span>
         )}
         <div className="space-y-1.5">
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{description}</p>
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{description}</p>
         </div>
-        <div className="flex flex-wrap gap-3 pt-2 justify-center">
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
           {actionText && actionHref && (
             <Button asChild variant="default">
               <Link href={actionHref}>{actionText}</Link>

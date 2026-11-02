@@ -14,7 +14,7 @@ export function SkipLink({
     <a
       href={`#${targetId}`}
       className={cn(
-        'sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[var(--brand-primary)] focus:text-white focus:rounded-xl focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--brand-focus)] font-medium text-sm transition-all',
+        'sr-only text-sm font-medium transition-all focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:bg-[var(--brand-primary)] focus:px-4 focus:py-2.5 focus:text-white focus:shadow-lg focus:ring-2 focus:ring-[var(--brand-focus)] focus:ring-offset-2 focus:outline-none',
         className
       )}
     >

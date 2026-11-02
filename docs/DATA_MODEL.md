@@ -1,13 +1,15 @@
 # Database Schema & Data Model Specification
+
 **Project:** S-12: AI-Based Mental Health Support and Crisis Detection (Sahayak)  
 **Document Version:** 1.0.0 (Foundational Architecture)  
-**Status:** Approved for Engineering Scaffolding  
+**Status:** Approved for Engineering Scaffolding
 
 ---
 
 ## 1. Architectural Schema Segregation
 
 To guarantee privacy by design, the database is partitioned into three logical schemas (or isolated database realms):
+
 1. **`identity_realm`**: Holds user accounts, credentials, and real-world identifying PII.
 2. **`telemetry_realm`**: Holds all behavioral signals, survey responses, journal entries, and risk computations, keyed solely by `student_pseudo_id`.
 3. **`audit_realm`**: Holds append-only, tamper-evident audit logs and the verified support directory.
@@ -169,7 +171,9 @@ erDiagram
 ## 3. Detailed Table Specifications & Privacy Attributes
 
 ### 3.1 `identity_realm.users`
-*Holds real identity information. Strictly restricted from regular analytics queries.*
+
+_Holds real identity information. Strictly restricted from regular analytics queries._
+
 - `id`: `UUID` (Primary Key).
 - `email`: `VARCHAR(255)` (Unique, Indexed).
 - `password_hash`: `VARCHAR(255)` (Argon2id or bcrypt).
@@ -178,18 +182,22 @@ erDiagram
 - `department`: `VARCHAR(100)` (e.g., "Computer Science").
 - `cohort_year`: `VARCHAR(10)` (e.g., "2026").
 - `created_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Confidential PII**. Access limited to Auth service and audited counselor unmasking.
+- _Privacy Classification:_ **Confidential PII**. Access limited to Auth service and audited counselor unmasking.
 
 ### 3.2 `identity_realm.pseudonym_maps`
-*The cryptographic bridge between real user IDs and pseudonymous telemetry.*
+
+_The cryptographic bridge between real user IDs and pseudonymous telemetry._
+
 - `id`: `UUID` (Primary Key).
 - `user_id`: `UUID` (Foreign Key to `users.id`, Unique).
 - `student_pseudo_id`: `VARCHAR(64)` (Unique, Indexed, generated via `HMAC_SHA256(user_id, PSEUDO_SALT_SECRET)`).
 - `created_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Cryptographic Isolation Boundary**. Direct SQL joins against this table are disallowed in API route controllers except in audited unmasking actions.
+- _Privacy Classification:_ **Cryptographic Isolation Boundary**. Direct SQL joins against this table are disallowed in API route controllers except in audited unmasking actions.
 
 ### 3.3 `identity_realm.consent_records`
-*Granular opt-in toggles controlling background processing.*
+
+_Granular opt-in toggles controlling background processing._
+
 - `id`: `UUID` (Primary Key).
 - `user_id`: `UUID` (Foreign Key to `users.id`, Unique).
 - `consent_surveys`: `BOOLEAN` (Default: `FALSE`).
@@ -199,10 +207,12 @@ erDiagram
 - `consent_journal_signals`: `BOOLEAN` (Default: `FALSE`, strictly separate opt-in allowing risk engine analysis of reflections).
 - `emergency_escalation_acknowledged`: `BOOLEAN` (Default: `FALSE`).
 - `updated_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Legal Consent Audit Record**. Retention: Duration of user account.
+- _Privacy Classification:_ **Legal Consent Audit Record**. Retention: Duration of user account.
 
 ### 3.4 `telemetry_realm.survey_responses`
-*Voluntary pulse checks submitted by students.*
+
+_Voluntary pulse checks submitted by students._
+
 - `id`: `UUID` (Primary Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
 - `instrument_type`: `VARCHAR(50)` (e.g., `"PHQ_STYLE"`, `"GAD_STYLE"`, `"BURNOUT_STYLE"`).
@@ -210,29 +220,35 @@ erDiagram
 - `normalized_score`: `FLOAT` ($0.0 \le s \le 1.0$).
 - `acute_flag_raised`: `BOOLEAN` (Indicates acute distress answer, e.g., self-harm ideation).
 - `submitted_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Sensitive Wellbeing Telemetry**. Retention: 90 days rolling window.
+- _Privacy Classification:_ **Sensitive Wellbeing Telemetry**. Retention: 90 days rolling window.
 
 ### 3.5 `telemetry_realm.academic_signals`
-*LMS-derived indicators reflecting workload and deadlines relative to student baseline.*
+
+_LMS-derived indicators reflecting workload and deadlines relative to student baseline._
+
 - `id`: `UUID` (Primary Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
 - `submission_delay_hours`: `FLOAT` (Hours past official deadline).
 - `attendance_percentage`: `FLOAT` (Attendance rate over recent period).
 - `active_assignments_count`: `INTEGER` (Workload clustering count).
 - `recorded_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Behavioral Telemetry**. Retention: 60 days rolling window.
+- _Privacy Classification:_ **Behavioral Telemetry**. Retention: 60 days rolling window.
 
 ### 3.6 `telemetry_realm.help_seeking_signals`
-*Interaction signals with campus wellness tools.*
+
+_Interaction signals with campus wellness tools._
+
 - `id`: `UUID` (Primary Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
 - `signal_type`: `ENUM('BOOKING_ABANDONED', 'RESOURCE_VIEW', 'NOCTURNAL_USAGE')`.
 - `metadata`: `JSONB` (Non-PII context: e.g., `{ time_of_day: "03:15", duration_sec: 240 }`).
 - `recorded_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Behavioral Telemetry**. Retention: 30 days rolling window.
+- _Privacy Classification:_ **Behavioral Telemetry**. Retention: 30 days rolling window.
 
 ### 3.7 `telemetry_realm.risk_evaluations`
-*Outputs of the explainable risk engine.*
+
+_Outputs of the explainable risk engine._
+
 - `id`: `UUID` (Primary Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
 - `tier`: `ENUM('TIER_0', 'TIER_1', 'TIER_2', 'TIER_3')`.
@@ -240,10 +256,12 @@ erDiagram
 - `corroboration_details`: `JSONB` (Indicates which signal families corroborated).
 - `plain_language_reasons`: `JSONB` (Array of human-readable non-diagnostic explanation strings).
 - `evaluated_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Algorithmic Evaluation Record**. Retention: 90 days.
+- _Privacy Classification:_ **Algorithmic Evaluation Record**. Retention: 90 days.
 
 ### 3.8 `telemetry_realm.journal_entries`
-*Student private reflections with envelope encryption.*
+
+_Student private reflections with envelope encryption._
+
 - `id`: `UUID` (Primary Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
 - `title_encrypted`: `TEXT` (AES-256-GCM ciphertext in base64).
@@ -252,10 +270,12 @@ erDiagram
 - `auth_tag`: `VARCHAR(32)` (Authentication Tag).
 - `created_at`: `TIMESTAMP WITH TIME ZONE`.
 - `updated_at`: `TIMESTAMP WITH TIME ZONE`.
-- *Privacy Classification:* **Student-Private, Envelope-Encrypted Data**. Decryptable only in server memory during an active, authenticated student session using the user's unwrapped Data Encryption Key (DEK). Counselors, admins, and database operators have zero decryption ability. Journals and free text are **NEVER** used, analyzed, or tokenized by the risk engine unless the student provides a separate, explicit opt-in (`consent_journal_signals`, default: `FALSE`).
+- _Privacy Classification:_ **Student-Private, Envelope-Encrypted Data**. Decryptable only in server memory during an active, authenticated student session using the user's unwrapped Data Encryption Key (DEK). Counselors, admins, and database operators have zero decryption ability. Journals and free text are **NEVER** used, analyzed, or tokenized by the risk engine unless the student provides a separate, explicit opt-in (`consent_journal_signals`, default: `FALSE`).
 
 ### 3.9 `telemetry_realm.counselor_cases`
-*Triage queue entries visible to authorized counselors.*
+
+_Triage queue entries visible to authorized counselors._
+
 - `id`: `UUID` (Primary Key).
 - `risk_evaluation_id`: `UUID` (Foreign Key).
 - `student_pseudo_id`: `VARCHAR(64)` (Foreign Key).
@@ -265,7 +285,9 @@ erDiagram
 - `closed_at`: `TIMESTAMP WITH TIME ZONE` (Nullable).
 
 ### 3.10 `telemetry_realm.case_feedback`
-*Feedback loop to minimize false alarms and calibrate engine weights.*
+
+_Feedback loop to minimize false alarms and calibrate engine weights._
+
 - `id`: `UUID` (Primary Key).
 - `counselor_case_id`: `UUID` (Foreign Key).
 - `feedback_rating`: `ENUM('APPROPRIATE_TIMELY', 'TOO_SENSITIVE', 'FALSE_ALARM_NOISE')`.
@@ -273,7 +295,9 @@ erDiagram
 - `submitted_at`: `TIMESTAMP WITH TIME ZONE`.
 
 ### 3.11 `audit_realm.audit_logs`
-*Cryptographically chained immutable audit records.*
+
+_Cryptographically chained immutable audit records._
+
 - `id`: `UUID` (Primary Key).
 - `timestamp`: `TIMESTAMP WITH TIME ZONE`.
 - `actor_id`: `UUID` (References acting user).
@@ -285,7 +309,9 @@ erDiagram
 - `current_entry_hash`: `VARCHAR(64)` (SHA-256 of current record concatenated with previous hash).
 
 ### 3.12 `audit_realm.verified_support_resources`
-*Authoritative catalog of verified support contacts and emergency hotlines.*
+
+_Authoritative catalog of verified support contacts and emergency hotlines._
+
 - `id`: `UUID` (Primary Key).
 - `name`: `VARCHAR(255)`.
 - `category`: `ENUM('CAMPUS_COUNSELING', 'NATIONAL_HELPLINE', 'EMERGENCY_SERVICES', 'PEER_SUPPORT', 'SPECIALIZED')`.
@@ -303,7 +329,7 @@ erDiagram
 - `verified_on`: `TIMESTAMP WITH TIME ZONE`.
 - `next_verification_due`: `TIMESTAMP WITH TIME ZONE`.
 - `verification_notes`: `TEXT`.
-- *Privacy Classification:* **Public Verified Directory**. Single source of truth compiled at build-time to `src/data/support-snapshot.json`.
+- _Privacy Classification:_ **Public Verified Directory**. Single source of truth compiled at build-time to `src/data/support-snapshot.json`.
 
 ---
 
@@ -312,6 +338,7 @@ erDiagram
 To ensure testability and robust hackathon demonstration without risking real student health data, the system includes a realistic, pre-calibrated **Synthetic Seed Generator**.
 
 ### Seed Cohort Architecture:
+
 - **Total Simulated Students:** 50
 - **Tier Distribution:**
   - **Tier 0 (Thriving):** 35 students (Healthy baseline variance, stable submissions, regular sleep).
@@ -323,4 +350,3 @@ To ensure testability and robust hackathon demonstration without risking real st
   - 1 Institutional Administrator (`admin@campus.edu`)
   - 3 Diverse Demo Student Personas (`ananya@campus.edu`, `rohit@campus.edu`, `priya@campus.edu`)
 - **Support Directory Entries:** 12 curated entries (Campus clinic, Tele-MANAS, KIRAN, Vandrevala Foundation, Crisis Text Line) all marked with explicit `VERIFY BEFORE LAUNCH` review stamps.
-
